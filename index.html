@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>오늘의 할 일 슬롯</title>
+  <title>AI 동호회 오늘의 당번</title>
   <style>
     body { font-family: "Malgun Gothic", sans-serif; max-width: 520px; margin: 32px auto; padding: 0 16px; color: #222; }
     h1 { color: #1f3b63; font-size: 22px; }
@@ -14,7 +14,7 @@
     .window { display: flex; gap: 6px; background: #e6b422; padding: 6px; border-radius: 10px; }
     .reel { position: relative; flex: 1; height: 180px; overflow: hidden; background: #fff; border-radius: 6px; box-shadow: inset 0 0 8px rgba(0,0,0,.35); }
     .strip { position: absolute; left: 0; right: 0; top: 0; will-change: transform; }
-    .cell { height: 60px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 6px; box-sizing: border-box; font-size: 16px; line-height: 1.25; font-weight: bold; color: #333; }
+    .cell { height: 60px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 6px; box-sizing: border-box; font-size: 15px; line-height: 1.25; font-weight: bold; color: #333; }
     .reel::before, .reel::after { content: ""; position: absolute; left: 0; right: 0; height: 60px; z-index: 2; pointer-events: none; }
     .reel::before { top: 0; background: linear-gradient(#000a, #0000); }
     .reel::after { bottom: 0; background: linear-gradient(#0000, #000a); }
@@ -26,45 +26,45 @@
 
     .spin { display: block; width: 100%; margin-top: 16px; font-size: 18px; font-weight: bold; padding: 14px; color: #5a3b00; background: linear-gradient(#ffe082, #e6b422); border: 3px solid #b8860b; border-radius: 40px; cursor: pointer; }
     .spin:disabled { opacity: .6; cursor: default; }
-    #out { margin-top: 18px; font-size: 18px; font-weight: bold; color: #1f3b63; min-height: 1.6em; text-align: center; }
+    #out { margin-top: 18px; font-size: 18px; font-weight: bold; color: #1f3b63; min-height: 1.6em; text-align: center; line-height: 1.5; }
   </style>
 </head>
 <body>
-  <h1>오늘은 무슨 일을 할까요?</h1>
-  <p>어떤 일을 하면 좋을지 추천드립니다.</p>
+  <h1>오늘은 누가 무슨 일을 할까요?</h1>
+  <p>AI 동호회 오늘의 당번을 뽑아 드립니다.</p>
   <input id="name" placeholder="이름을 입력하세요">
 
   <div class="machine">
-    <div class="marquee">오늘의 슬롯</div>
+    <div class="marquee">AI 동호회 슬롯</div>
     <div class="window">
       <div class="reel"><div class="strip"></div><div class="pointer"></div></div>
       <div class="reel"><div class="strip"></div><div class="pointer"></div></div>
       <div class="reel"><div class="strip"></div><div class="pointer"></div></div>
     </div>
     <div class="labels">
+      <div class="label">누가</div>
       <div class="label">무엇을</div>
-      <div class="label">어떤 일을</div>
       <div class="label">어떻게</div>
     </div>
-    <button id="go" class="spin">슬롯 돌리기</button>
+    <button id="go" class="spin">당번 뽑기</button>
   </div>
   <p id="out" aria-live="polite"></p>
 
   <script>
     var GROUPS = [
-      ['KEIT', 'KIAT', 'TIPA', '국내 주식', '오늘 점심'],
-      ['상시점검', '본정산', '동향 파악', '뭐먹을까'],
-      ['옆 사람한테 추천받기', '열심히 하기', '하는 척 하기']
+      ['회장', '운영이사', '재무이사', '전략기획이사', '대외협력이사', '홍보이사', '리서치이사', '품질보증이사'],
+      ['AI한테 점심 메뉴 물어보기', '한 줄 프롬프트로 보고서 쓰기', 'AI와 끝말잇기 하기', 'AI 환각 잡아내기', 'AI한테 농담 시키기', 'AI로 동호회 로고 만들기', '엑셀 수식 AI에 떠넘기기', 'AI가 쓴 시 낭독하기','다음달 회비를'],
+      ['최대한 진지하게', '티 안 나게 몰래', '커피 한 잔 들고', '박수 받으며', '일단 저지르고 보기', '큰 소리로 자랑하며','화끈하게 2배로 내기']
     ];
-    var H = 60;                       // 한 칸 높이(px). CSS의 .cell 높이와 같아야 함
-    var DURATIONS = [2000, 2900, 3800]; // 왼쪽부터 차례로 멈추는 시간(ms)
-    var SPEED = 15;                   // 초당 지나가는 칸 수
+    var H = 60;
+    var DURATIONS = [2000, 2900, 3800];
+    var SPEED = 15;
 
     var reels = Array.prototype.slice.call(document.querySelectorAll('.reel'));
     var btn = document.getElementById('go');
     var outEl = document.getElementById('out');
 
-    function offsetFor(index) { return -(index - 1) * H; }   // 가운데 칸(두 번째 줄)에 index번 칸이 오도록
+    function offsetFor(index) { return -(index - 1) * H; }
 
     function build(strip, items, repeats) {
       strip.innerHTML = '';
@@ -78,7 +78,6 @@
       }
     }
 
-    // 처음 화면: 각 릴에 첫 항목을 가운데로 보여 줌
     reels.forEach(function (reel, i) {
       var strip = reel.querySelector('.strip');
       build(strip, GROUPS[i], 4);
@@ -91,7 +90,7 @@
       var results = [];
       reels.forEach(function (reel, i) {
         var items = GROUPS[i], n = items.length;
-        var chosen = Math.floor(Math.random() * n);          // 결과를 먼저 정함
+        var chosen = Math.floor(Math.random() * n);
         results.push(items[chosen]);
         var rows = Math.round(DURATIONS[i] / 1000 * SPEED);
         var repeats = Math.ceil(rows / n) + 3;
@@ -102,7 +101,7 @@
         reel.className = 'reel';
         strip.style.transition = 'none';
         strip.style.transform = 'translateY(' + offsetFor(1) + 'px)';
-        void strip.offsetHeight;                              // 시작 위치를 먼저 확정
+        void strip.offsetHeight;
         strip.style.transition = 'transform ' + DURATIONS[i] + 'ms cubic-bezier(.2,.6,.2,1)';
         strip.style.transform = 'translateY(' + offsetFor(finalIndex) + 'px)';
 
@@ -110,8 +109,8 @@
       });
       setTimeout(function () {
         var name = document.getElementById('name').value.trim();
-        outEl.textContent = (name ? name + '님, ' : '') + '오늘은 ' + results.join(' · ') + '!';
-        btn.textContent = '다시 돌리기';
+        outEl.textContent = (name ? name + '님, ' : '') + '오늘의 당번: ' + results.join(' · ') + '!';
+        btn.textContent = '다시 뽑기';
         btn.disabled = false;
       }, DURATIONS[DURATIONS.length - 1] + 150);
     }
