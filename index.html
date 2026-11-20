@@ -3,27 +3,100 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>테스트 페이지</title>
+  <title>오늘의 할 일 룰렛</title>
   <style>
     body { font-family: "Malgun Gothic", sans-serif; max-width: 480px; margin: 40px auto; padding: 0 16px; color: #222; }
     h1 { color: #1f3b63; font-size: 22px; }
     input, button { font-size: 16px; padding: 10px; margin-top: 8px; }
     input { width: 100%; box-sizing: border-box; }
     button { width: 100%; background: #1f4e9c; color: #fff; border: 0; border-radius: 6px; cursor: pointer; }
-    #out { margin-top: 16px; font-weight: bold; }
+    button:disabled { opacity: .5; cursor: default; }
+    ul { list-style: none; padding: 0; margin: 18px 0 0; }
+    li { padding: 12px 14px; margin-bottom: 6px; border: 1px solid #dbe4f0; border-radius: 8px; background: #f4f7fc; transition: background .05s; }
+    li.active { background: #ffd54f; border-color: #f9a825; font-weight: bold; }
+    li.picked { background: #1f4e9c; border-color: #1f4e9c; color: #fff; font-weight: bold; }
+    #out { margin-top: 16px; font-size: 18px; font-weight: bold; color: #1f3b63; min-height: 1.5em; }
   </style>
 </head>
 <body>
   <h1>오늘은 무슨 일을 할까요?</h1>
   <p>어떤 일을 하면 좋을지 추천드립니다.</p>
   <input id="name" placeholder="이름을 입력하세요">
-  <button id="go">인사하기</button>
-  <p id="out"></p>
+  <button id="go">룰렛 돌리기</button>
+
+  <ul id="list"></ul>
+  <p id="out" aria-live="polite"></p>
+
   <script>
-    document.getElementById('go').onclick = function () {
-      var n = document.getElementById('name').value.trim();
-      document.getElementById('out').textContent = n ? n + '님, 안녕하세요!' : '이름을 입력해 주세요.';
-    };
+    var TASKS = [
+      'KEIT 보완률',
+      'KIAT 상시점검',
+      'TIPA 상시점검',
+      'KEIT 상시점검',
+      '주식 동향 확인'
+      '오늘 점심 뭐먹지 고민'
+    ];
+    var TOTAL_MS = 3000;   // 돌아가는 시간(약 3초)
+
+    var listEl = document.getElementById('list');
+    var outEl = document.getElementById('out');
+    var btn = document.getElementById('go');
+    var items = TASKS.map(function (t) {
+      var li = document.createElement('li');
+      li.textContent = t;
+      listEl.appendChild(li);
+      return li;
+    });
+
+    // 처음엔 빠르게, 끝으로 갈수록 느려지는 간격(룰렛 느낌)
+    function buildDelays() {
+      var delays = [], t = 0;
+      while (t < TOTAL_MS) {
+        var p = t / TOTAL_MS;
+        var d = 50 + Math.round(p * p * 300);
+        delays.push(d);
+        t += d;
+      }
+      return delays;
+    }
+
+    function highlight(i) {
+      items.forEach(function (li, idx) {
+        li.className = idx === i ? 'active' : '';
+      });
+    }
+
+    function spin() {
+      btn.disabled = true;
+      outEl.textContent = '';
+      var n = TASKS.length;
+      var chosen = Math.floor(Math.random() * n);          // 결과를 먼저 정하고
+      var delays = buildDelays();
+      var pos = (((chosen - delays.length) % n) + n) % n;  // 마지막 칸이 chosen이 되도록 시작 위치를 역산
+      highlight(pos);
+      var k = 0;
+      (function tick() {
+        if (k >= delays.length) { finish(chosen); return; }
+        setTimeout(function () {
+          pos = (pos + 1) % n;
+          highlight(pos);
+          k++;
+          tick();
+        }, delays[k]);
+      })();
+    }
+
+    function finish(chosen) {
+      items.forEach(function (li, idx) {
+        li.className = idx === chosen ? 'picked' : '';
+      });
+      var name = document.getElementById('name').value.trim();
+      outEl.textContent = (name ? name + '님, ' : '') + '오늘은 "' + TASKS[chosen] + '" 어떠세요?';
+      btn.textContent = '다시 돌리기';
+      btn.disabled = false;
+    }
+
+    btn.onclick = spin;
   </script>
 </body>
 </html>
